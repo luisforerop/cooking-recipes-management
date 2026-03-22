@@ -1,5 +1,9 @@
 {
   "conventionalCommits.scopes": [
-    "openspec"
-  ]
+    "openspec",
+    "frontend"
+  ],
+  "chat.tools.terminal.autoApprove": {
+    "openspec": true
+  }
 }

@@ -8,5 +8,6 @@
 | preparation             | jsonb                    | NO          | '[]'::jsonb       |
 | nutritional_information | jsonb                    | YES         | null              |
 | complementaries         | jsonb                    | NO          | '[]'::jsonb       |
+| additional_info         | jsonb                    | NO          | '{}'::jsonb       |
 | created_at              | timestamp with time zone | NO          | now()             |
 | updated_at              | timestamp with time zone | NO          | now()             |

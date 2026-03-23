@@ -15,11 +15,7 @@ export interface PreparationStep {
 }
 
 // Allowed nutritional information types
-export type NutritionalType =
-  | "calories"
-  | "protein"
-  | "carbohydrates"
-  | "fat";
+export type NutritionalType = "calories" | "protein" | "carbohydrates" | "fat";
 
 // Nutritional information entry
 export interface NutritionalInfo {
@@ -50,4 +46,7 @@ export interface Recipe {
   nutritionalInformation?: NutritionalInfo[];
 
   complementaries: Complementary[];
+
+  /** Unstructured additional data stored as jsonb in the DB. Omit to use DB default `{}`. */
+  additionalInfo?: Record<string, unknown>;
 }

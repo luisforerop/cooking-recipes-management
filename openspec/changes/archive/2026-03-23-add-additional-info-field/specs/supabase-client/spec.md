@@ -1,16 +1,4 @@
-### Requirement: Supabase client singleton
-
-The system SHALL export a single Supabase client instance from `lib/supabase.ts` using environment variables `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-
-#### Scenario: Client is initialized with env vars
-
-- **WHEN** the application starts
-- **THEN** the Supabase client is available for use without additional configuration at the call site
-
-#### Scenario: Missing env vars fail at startup
-
-- **WHEN** either `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY` is not defined
-- **THEN** the client initialization throws an error with a descriptive message
+## MODIFIED Requirements
 
 ### Requirement: Recipe type-to-schema mapping
 

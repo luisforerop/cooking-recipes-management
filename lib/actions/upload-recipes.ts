@@ -4,9 +4,9 @@ import { supabase } from "@/lib/supabase";
 import type { Recipe } from "@/lib/types/recipe";
 
 // Maps the camelCase Recipe type to the snake_case column names in the `recipes` table.
-// preparationTime  → preparation_time
+// preparationTime        → preparation_time
 // nutritionalInformation → nutritional_information
-// All other fields are name-compatible with the DB schema.
+// additionalInfo         → additional_info (omitted when undefined so DB applies DEFAULT '{}')
 function toDbRow(recipe: Recipe) {
   return {
     title: recipe.title,
@@ -16,6 +16,9 @@ function toDbRow(recipe: Recipe) {
     preparation: recipe.preparation,
     nutritional_information: recipe.nutritionalInformation ?? null,
     complementaries: recipe.complementaries,
+    ...(recipe.additionalInfo !== undefined && {
+      additional_info: recipe.additionalInfo,
+    }),
   };
 }
 

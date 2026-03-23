@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment Variables
+
+Copy `.env.local` and fill in your Supabase project credentials:
+
+```bash
+cp .env.local .env.local
+```
+
+| Variable                        | Description                                                 |
+| ------------------------------- | ----------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | Your Supabase project URL (e.g. `https://xxxx.supabase.co`) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase anonymous/public API key                      |
+
+These are required for the recipe upload feature to work.
+
 ## Getting Started
 
 First, run the development server:

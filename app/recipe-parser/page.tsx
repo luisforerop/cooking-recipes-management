@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { parseRecipes } from "@/lib/recipe-parser";
 import type { Recipe } from "@/lib/types/recipe";
+import { RecipeUploadTable } from "@/components/recipe-upload-table";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -36,7 +37,7 @@ export default function RecipeParserPage() {
   }, [jsonOutput]);
 
   return (
-    <div className="flex flex-col h-screen bg-zinc-50 dark:bg-zinc-950 font-sans">
+    <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans">
       {/* Header */}
       <header className="flex items-center gap-4 px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900">
         <a
@@ -98,6 +99,9 @@ export default function RecipeParserPage() {
           </div>
         </div>
       </div>
+
+      {/* Upload table — rendered below panels when recipes are parsed */}
+      {parsed.length > 0 && <RecipeUploadTable recipes={parsed} />}
     </div>
   );
 }

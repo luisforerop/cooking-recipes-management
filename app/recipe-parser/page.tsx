@@ -1,40 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { parseRecipes } from "@/lib/recipe-parser";
-import type { Recipe } from "@/lib/types/recipe";
-import { RecipeUploadTable } from "@/components/recipe-upload-table";
-
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return debounced;
-}
+import { useState } from "react";
+import { AddRecipesModal } from "@/components/add-recipes-modal";
 
 export default function RecipeParserPage() {
-  const [input, setInput] = useState("");
-  const [copied, setCopied] = useState(false);
-
-  const debouncedInput = useDebounce(input, 300);
-
-  const [parsed, setParsed] = useState<Recipe[]>([]);
-
-  useEffect(() => {
-    setParsed(parseRecipes(debouncedInput));
-  }, [debouncedInput]);
-
-  const jsonOutput = parsed.length > 0 ? JSON.stringify(parsed, null, 2) : "";
-
-  const handleCopy = useCallback(() => {
-    if (!jsonOutput) return;
-    navigator.clipboard.writeText(jsonOutput).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [jsonOutput]);
+  const [modalOpen, setModalOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-zinc-50 dark:bg-zinc-950 font-sans">
@@ -47,61 +17,26 @@ export default function RecipeParserPage() {
           ← Home
         </a>
         <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Recipe Parser
+          Recetas
         </h1>
-        <span className="text-xs text-zinc-400">MD → JSON</span>
       </header>
 
-      {/* Two-panel layout */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: Input panel */}
-        <div className="flex flex-col flex-1 border-r border-zinc-200 dark:border-zinc-800">
-          <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-              Markdown Input
-            </span>
-          </div>
-          <textarea
-            className="flex-1 w-full resize-none p-4 text-sm font-mono bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 placeholder-zinc-400 focus:outline-none"
-            placeholder={`Paste one or more recipes here…\n\nTÍTULO: NOMBRE DE LA RECETA\nRENDIMIENTO: X porciones\nTIEMPO: X minutos\n\nINGREDIENTES:\n\nITEM: …`}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            spellCheck={false}
-          />
+      {/* Main content */}
+      <main className="flex flex-1 items-center justify-center">
+        <div className="flex flex-col items-center gap-4 text-center px-6">
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">
+            Todavía no hay recetas cargadas.
+          </p>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="px-5 py-2.5 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 text-sm font-semibold tracking-wide hover:bg-zinc-700 dark:hover:bg-zinc-300 transition-colors"
+          >
+            AGREGAR RECETAS
+          </button>
         </div>
+      </main>
 
-        {/* Right: Output panel */}
-        <div className="flex flex-col flex-1">
-          <div className="flex items-center justify-between px-4 py-2 border-b border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900">
-            <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">
-              JSON Output
-            </span>
-            <button
-              onClick={handleCopy}
-              disabled={!jsonOutput}
-              className="text-xs px-3 py-1 rounded-md bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-            >
-              {copied ? "Copied!" : "Copy JSON"}
-            </button>
-          </div>
-          <div className="flex-1 overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
-            {jsonOutput ? (
-              <pre className="text-sm font-mono text-zinc-800 dark:text-zinc-200 whitespace-pre-wrap break-words">
-                {jsonOutput}
-              </pre>
-            ) : (
-              <div className="flex h-full items-center justify-center text-zinc-400 text-sm">
-                {input.trim()
-                  ? "No valid recipes found. Check the format."
-                  : "Paste a recipe in the left panel to see the JSON output."}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Upload table — rendered below panels when recipes are parsed */}
-      {parsed.length > 0 && <RecipeUploadTable recipes={parsed} />}
+      <AddRecipesModal open={modalOpen} onClose={() => setModalOpen(false)} />
     </div>
   );
 }

@@ -5,7 +5,22 @@ import type { Recipe } from "@/lib/types/recipe";
 import { parseRecipes } from "@/lib/recipe-parser";
 import { RecipeUploadTable } from "@/components/recipe-upload-table";
 
-type Step = "format" | "markdown" | "upload";
+type FieldType = "string" | "number" | "boolean" | "json";
+
+interface AdditionalInfoEntry {
+  key: string;
+  type: FieldType;
+  value: string;
+}
+
+type Step = "format" | "markdown" | "additional-info" | "upload";
+
+const VALUE_PLACEHOLDERS: Record<FieldType, string> = {
+  string: "Valor",
+  number: "Ej: 42",
+  boolean: "true | false",
+  json: 'Ej: {"clave": "valor"}',
+};
 
 interface Props {
   open: boolean;
@@ -24,6 +39,12 @@ function useDebounce<T>(value: T, delay: number): T {
 export function AddRecipesModal({ open, onClose }: Props) {
   const [step, setStep] = useState<Step>("format");
   const [input, setInput] = useState("");
+  const [entries, setEntries] = useState<AdditionalInfoEntry[]>([]);
+  const [formKey, setFormKey] = useState("");
+  const [formType, setFormType] = useState<FieldType>("string");
+  const [formValue, setFormValue] = useState("");
+  const [keyError, setKeyError] = useState("");
+  const [valueError, setValueError] = useState("");
 
   const debouncedInput = useDebounce(input, 300);
   const parsed: Recipe[] = debouncedInput.trim()
@@ -36,12 +57,71 @@ export function AddRecipesModal({ open, onClose }: Props) {
     : 0;
   const errorCount = Math.max(0, attemptedBlocks - parsed.length);
 
+  // Build additionalInfo record from the entries list, casting each value to its declared type
+  const additionalInfo: Record<string, unknown> = Object.fromEntries(
+    entries.map((e) => {
+      let v: unknown = e.value;
+      if (e.type === "number") v = parseFloat(e.value);
+      else if (e.type === "boolean") v = e.value === "true";
+      else if (e.type === "json") {
+        try {
+          v = JSON.parse(e.value);
+        } catch {
+          v = e.value;
+        }
+      }
+      return [e.key, v];
+    }),
+  );
+
+  // Enrich parsed recipes with additionalInfo for the upload step
+  const parsedWithInfo: Recipe[] = parsed.map((r) => ({
+    ...r,
+    additionalInfo,
+  }));
+
+  function handleAddEntry() {
+    if (!formKey.trim()) {
+      setKeyError("La propiedad no puede estar vacía");
+      return;
+    }
+    if (formType === "boolean") {
+      const v = formValue.trim();
+      if (v !== "true" && v !== "false") {
+        setValueError('El valor debe ser "true" o "false"');
+        return;
+      }
+    }
+    if (formType === "json") {
+      try {
+        JSON.parse(formValue);
+      } catch {
+        setValueError("El valor no es un JSON válido");
+        return;
+      }
+    }
+    setEntries((prev) => [
+      ...prev,
+      { key: formKey.trim(), type: formType, value: formValue },
+    ]);
+    setFormKey("");
+    setFormValue("");
+    setKeyError("");
+    setValueError("");
+  }
+
   function handleClose() {
     onClose();
     // Reset after close animation completes
     setTimeout(() => {
       setStep("format");
       setInput("");
+      setEntries([]);
+      setFormKey("");
+      setFormType("string");
+      setFormValue("");
+      setKeyError("");
+      setValueError("");
     }, 200);
   }
 
@@ -63,6 +143,7 @@ export function AddRecipesModal({ open, onClose }: Props) {
           <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-50">
             {step === "format" && "Agregar recetas"}
             {step === "markdown" && "Pegar recetas en Markdown"}
+            {step === "additional-info" && "Información adicional"}
             {step === "upload" && "Confirmar carga"}
           </h2>
           <button
@@ -168,29 +249,160 @@ export function AddRecipesModal({ open, onClose }: Props) {
             </div>
           )}
 
+          {/* ── Step: additional-info ── */}
+          {step === "additional-info" && (
+            <div className="flex flex-col gap-6 px-6 py-6">
+              {/* Form */}
+              <div>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-4">
+                  Agregá información adicional que se aplicará a todas las
+                  recetas del lote (opcional).
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 items-start">
+                  <div className="flex flex-col gap-1 flex-1">
+                    <input
+                      type="text"
+                      placeholder="Propiedad"
+                      value={formKey}
+                      onChange={(e) => {
+                        setFormKey(e.target.value);
+                        setKeyError("");
+                      }}
+                      className={`w-full text-sm px-3 py-2 rounded-md border bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600 ${
+                        keyError
+                          ? "border-red-400"
+                          : "border-zinc-300 dark:border-zinc-700"
+                      }`}
+                    />
+                    {keyError && (
+                      <span className="text-xs text-red-500">{keyError}</span>
+                    )}
+                  </div>
+                  <select
+                    value={formType}
+                    onChange={(e) => {
+                      setFormType(e.target.value as FieldType);
+                      setValueError("");
+                    }}
+                    className="text-sm px-3 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600"
+                  >
+                    <option value="string">string</option>
+                    <option value="number">number</option>
+                    <option value="boolean">boolean</option>
+                    <option value="json">json</option>
+                  </select>
+                  <div className="flex flex-col gap-1 flex-1">
+                    <input
+                      type="text"
+                      placeholder={VALUE_PLACEHOLDERS[formType]}
+                      value={formValue}
+                      onChange={(e) => {
+                        setFormValue(e.target.value);
+                        setValueError("");
+                      }}
+                      className={`w-full text-sm px-3 py-2 rounded-md border bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-zinc-300 dark:focus:ring-zinc-600 ${
+                        valueError
+                          ? "border-red-400"
+                          : "border-zinc-300 dark:border-zinc-700"
+                      }`}
+                    />
+                    {valueError && (
+                      <span className="text-xs text-red-500">{valueError}</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleAddEntry}
+                    className="text-sm px-4 py-2 rounded-md border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors whitespace-nowrap"
+                  >
+                    Agregar
+                  </button>
+                </div>
+              </div>
+
+              {/* Entries list */}
+              {entries.length === 0 ? (
+                <p className="text-xs text-zinc-400 italic">
+                  No hay propiedades adicionales. Podés continuar sin agregar
+                  ninguna.
+                </p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {entries.map((entry, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-3 px-3 py-2 rounded-md border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800"
+                    >
+                      <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200 flex-1 truncate">
+                        {entry.key}
+                      </span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 shrink-0">
+                        {entry.type}
+                      </span>
+                      <span className="text-sm text-zinc-600 dark:text-zinc-400 flex-1 truncate font-mono">
+                        {entry.value}
+                      </span>
+                      <button
+                        onClick={() => {
+                          const e = entries[index];
+                          setFormKey(e.key);
+                          setFormType(e.type);
+                          setFormValue(e.value);
+                          setEntries((prev) =>
+                            prev.filter((_, i) => i !== index),
+                          );
+                        }}
+                        className="text-xs text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors shrink-0"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() =>
+                          setEntries((prev) =>
+                            prev.filter((_, i) => i !== index),
+                          )
+                        }
+                        className="text-xs text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors shrink-0"
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* ── Step: upload ── */}
           {step === "upload" && (
             <div className="overflow-y-auto">
-              <RecipeUploadTable recipes={parsed} />
+              <RecipeUploadTable recipes={parsedWithInfo} />
             </div>
           )}
         </div>
 
         {/* Modal footer */}
-        {(step === "markdown" || step === "upload") && (
+        {(step === "markdown" ||
+          step === "additional-info" ||
+          step === "upload") && (
           <div className="flex items-center justify-between px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 shrink-0">
             <button
-              onClick={() =>
-                setStep(step === "markdown" ? "format" : "markdown")
-              }
+              onClick={() => {
+                if (step === "markdown") setStep("format");
+                else if (step === "additional-info") setStep("markdown");
+                else setStep("additional-info");
+              }}
               className="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors"
             >
               ← Atrás
             </button>
-            {step === "markdown" && (
+            {(step === "markdown" || step === "additional-info") && (
               <button
-                onClick={() => setStep("upload")}
-                disabled={parsed.length === 0}
+                onClick={() =>
+                  step === "markdown"
+                    ? setStep("additional-info")
+                    : setStep("upload")
+                }
+                disabled={step === "markdown" && parsed.length === 0}
                 className="text-sm px-4 py-2 rounded-md bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium hover:bg-zinc-700 dark:hover:bg-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Continuar

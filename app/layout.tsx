@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
+import Link from "next/link";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,7 +29,19 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <header className="sticky top-0 z-10 flex items-center justify-end border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-6 py-3">
+          <Link href="/checkout" aria-label="Ver carrito de recetas">
+            <Image
+              src="/mini-cart.svg"
+              alt="Carrito de recetas"
+              width={28}
+              height={28}
+            />
+          </Link>
+        </header>
+        {children}
+      </body>
     </html>
   );
 }

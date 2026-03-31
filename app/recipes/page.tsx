@@ -1,7 +1,8 @@
-import { getRecipes } from "@/lib/supabase";
+import { AddRecipesButton } from "@/components/add-recipes-button";
+import { PdfRenderer } from "@/components/pdf-renderer";
 import { RecipeCard } from "@/components/recipe-card";
 import { RecipesPagination } from "@/components/recipes-pagination";
-import { AddRecipesButton } from "@/components/add-recipes-button";
+import { getRecipes } from "@/lib/supabase";
 
 const PAGE_SIZE = 9;
 
@@ -47,6 +48,7 @@ export default async function RecipesPage({
                 <RecipeCard key={recipe.id} recipe={recipe} />
               ))}
             </div>
+            <PdfRenderer recipes={recipes}></PdfRenderer>
             {totalPages > 1 && (
               <RecipesPagination
                 currentPage={currentPage}

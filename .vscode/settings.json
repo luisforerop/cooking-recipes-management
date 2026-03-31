@@ -2,7 +2,8 @@
   "conventionalCommits.scopes": [
     "openspec",
     "frontend",
-    "typings"
+    "typings",
+    "exploration"
   ],
   "chat.tools.terminal.autoApprove": {
     "openspec": true

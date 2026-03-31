@@ -31,6 +31,9 @@ export interface Complementary {
 
 // Main recipe interface
 export interface Recipe {
+  /** Supabase UUID — used as unique key for cart deduplication */
+  id: string;
+
   title: string;
 
   /** Number of portions the recipe yields */

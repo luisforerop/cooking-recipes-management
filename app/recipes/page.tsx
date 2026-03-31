@@ -29,6 +29,12 @@ export default async function RecipesPage({
         <h1 className="flex-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           Recetas
         </h1>
+        <a
+          href="/recipes/select"
+          className="px-4 py-2 rounded-md text-sm font-medium border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
+        >
+          Generar PDF
+        </a>
         <AddRecipesButton />
       </header>
 
